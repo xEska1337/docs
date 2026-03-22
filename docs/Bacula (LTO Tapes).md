@@ -95,14 +95,81 @@ cd /usr/sbin
 
 * `status jobid=1234` (Checks the status of a specific job)
 * `list files jobid=1234` (Lists the files processed in a specific job)
+* `restore` (Start restore)
+* `list jobs` (List all jobs)
 
 ---
 
-## Disaster Recovery (VM Export & Import)
+## Restoring Files from Backup
 
-To protect the Bacula configuration, the Debian VM is exported directly from the TrueNAS ZFS volumes (ZVOLs) to external storage.
+!!! tip "GUI vs. CLI Restores"
+    Before restoring, you need to create a restore job template. You can do that in the Bacularis web interface. However, if you are restoring from a very large backup job, it is highly recommended to use the `bconsole` CLI interface for restore process, as it handles building and navigating massive file trees much faster.
 
-### Prerequisites (TrueNAS Shell)
+**1. Enter Bconsole:**
+
+Access your Debian VM and open the Bacula console:
+```bash
+cd /usr/sbin
+./bconsole
+```
+
+**2. Locate Your Job ID:**
+
+List all previous jobs to find the ID of the backup you want to restore from:
+```text
+*list jobs
+```
+
+**3. Initiate the Restore:**
+
+Start the restore process:
+```text
+*restore
+```
+Choose the appropriate option for your needs. To restore specific files, select **option 3** (*Enter list of comma separated JobIds to select*), then input your target Job ID.
+
+**4. Select Files:**
+
+Wait for the virtual file tree to build. Once loaded, you can navigate through the backup (using standard `cd` and `ls` commands) and select files to restore:
+```text
+*mark "your_file_or_directory"
+```
+
+**5. Finalize Selection:**
+
+When you have marked all desired files, type:
+```text
+*done
+```
+
+**6. Review and Run:**
+
+Bacula will display a summary of the restore job. 
+
+* To restore to the **original location**, you don't need to change anything. 
+* To restore to a **different location**, type `mod`, select the `Where` option to modify the restore path, and specify the new directory.
+
+Finally, run the job and wait for it to complete.
+
+---
+
+## Disaster Recovery Strategies
+
+To ensure maximum resilience and prevent a single point of failure, I maintain two separate disaster recovery methods for the backup infrastructure itself. You can rebuild using Bacula's native catalog backup, or perform a full bare-metal restore by exporting the TrueNAS VM disk.
+
+### Method 1: Bacula Catalog Backup (Native)
+
+Bacula automatically includes a `BackupCatalog` job in its default configuration. This job creates a database dump (containing all your file records, volumes, job histories, and configuration paths) and writes it directly to your storage media.
+
+!!! tip "Why keep both?"
+    While restoring the catalog requires you to manually rebuild the Debian VM and reinstall Bacula first, having the `BackupCatalog` on tape is invaluable. If your TrueNAS server completely fails and you need to move your tape drive to a completely different hypervisor or bare-metal Linux machine, the catalog dump allows you to resume operations without needing to import a TrueNAS-specific ZVOL.
+
+### Method 2: Full VM Export & Import (ZVOL)
+
+To protect the entire Bacula configuration, web interface, and OS layer simultaneously, the Debian VM is exported directly from the TrueNAS ZFS volumes (ZVOLs) to external storage. This is the fastest way to recover if the TrueNAS server is still healthy but the VM becomes corrupted.
+
+
+#### Prerequisites (TrueNAS Shell)
 
 1. Ensure your TrueNAS user has SSH access enabled.
 2. Allow `sudo` command execution for your user.
@@ -110,7 +177,7 @@ To protect the Bacula configuration, the Debian VM is exported directly from the
 4. Create a temporary transfer directory: `mkdir /mnt/transfer`
 5. Grant ownership to your user: `sudo chown <USERNAME>:<USERNAME> /mnt/transfer`
 
-### Exporting the VM
+#### Exporting the VM
 
 **CRITICAL:** Power down the Debian VM before proceeding to avoid data corruption!
 
@@ -121,9 +188,9 @@ sudo dd if=/dev/zvol/<POOL_NAME>/<ZVOL_NAME> bs=1M status=progress | gzip -1 > /
 
 ```
 
-Once completed, use a tool like WinSCP to securely copy the `.raw.gz` file to your external USB drives.
+Once completed, use a tool like WinSCP to securely copy the `.raw.gz` file to your external USB drive or other secure place.
 
-### Importing / Restoring the VM
+#### Importing / Restoring the VM
 
 To identify existing volumes, use: `sudo zfs list -t volume`
 
@@ -143,7 +210,7 @@ sudo gunzip -c /mnt/transfer/<ZVOL_NAME>.raw.gz | sudo dd of=/dev/zvol/<POOL_NAM
 
 ---
 
-## Troubleshooting (Missing GRUB After Import)
+#### Troubleshooting (Missing GRUB After Import)
 
 If the restored VM boots into the UEFI shell because GRUB is missing, follow these steps inside the UEFI shell prompt:
 
