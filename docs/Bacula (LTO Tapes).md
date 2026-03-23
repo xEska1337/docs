@@ -159,7 +159,7 @@ To ensure maximum resilience and prevent a single point of failure, I maintain t
 
 ### Method 1: Bacula Catalog Backup (Native)
 
-Bacula automatically includes a `BackupCatalog` job in its default configuration. This job creates a database dump (containing all your file records, volumes, job histories, and configuration paths) and writes it directly to your storage media.
+Bacula automatically includes a `BackupCatalog` job in its default configuration. This job creates a database dump (containing all your file records, volumes, job histories, and configuration paths) and writes it directly to your storage media. To ensure you can actually find and restore this catalog during a disaster, you must securely store the generated `.bsr` (bootstrap) file off-site or on a separate machine. This file marks the exact physical position of the catalog dump on the tape.
 
 !!! tip "Why keep both?"
     While restoring the catalog requires you to manually rebuild the Debian VM and reinstall Bacula first, having the `BackupCatalog` on tape is invaluable. If your TrueNAS server completely fails and you need to move your tape drive to a completely different hypervisor or bare-metal Linux machine, the catalog dump allows you to resume operations without needing to import a TrueNAS-specific ZVOL.
@@ -179,34 +179,26 @@ To protect the entire Bacula configuration, web interface, and OS layer simultan
 
 #### Exporting the VM
 
-**CRITICAL:** Power down the Debian VM before proceeding to avoid data corruption!
+!!! danger "CRITICAL"
+    You **must** power down the Debian VM completely before proceeding. Taking a snapshot of a running VM without guest-agent quiescing can lead to severe data corruption.
 
-Run the following command in the TrueNAS shell to compress and export the ZVOL:
+Run the following command in the TrueNAS shell. This one-liner generates a timestamp, takes a fast ZFS snapshot, and pipes the serialized data through `pv` (for a progress bar) and `gzip` for compression:
 
-```bash
-sudo dd if=/dev/zvol/<POOL_NAME>/<ZVOL_NAME> bs=1M status=progress | gzip -1 > /mnt/transfer/<ZVOL_NAME>.raw.gz
-
+```bash title="Export ZVOL to external storage"
+TS=$(date +"%Y-%m-%d_%H-%M-%S") && sudo zfs snapshot <POOL_NAME>/<ZVOL_NAME>@$TS && sudo zfs send <POOL_NAME>/<ZVOL_NAME>@$TS | pv | gzip > /mnt/transfer/bacula_vm_backup_$TS.gz
 ```
 
-Once completed, use a tool like WinSCP to securely copy the `.raw.gz` file to your external USB drive or other secure place.
+Once completed, use a secure transfer tool (like WinSCP or `rsync`) to securely copy the resulting `.gz` file to an external USB drive or off-site storage location.
 
 #### Importing / Restoring the VM
 
-To identify existing volumes, use: `sudo zfs list -t volume`
+To import the VM and create a new ZVOL from your compressed backup, use the following command (be sure to replace `<TIMESTAMP>` with your actual file's timestamp):
 
-1. Create a new ZVOL for the restored VM (adjust the size as needed):
 
-```bash
-sudo zfs create -V 20G <POOL_NAME>/<ZVOL_NAME>-restored
-
+```bash title="Restore ZVOL from backup"
+pv /mnt/transfer/bacula_vm_backup_<TIMESTAMP>.gz | gunzip -c | sudo zfs recv <POOL_NAME>/<ZVOL_NAME>-restored
 ```
-
-2. Unzip and write the image to the new ZVOL:
-
-```bash
-sudo gunzip -c /mnt/transfer/<ZVOL_NAME>.raw.gz | sudo dd of=/dev/zvol/<POOL_NAME>/<ZVOL_NAME>-restored bs=1M status=progress
-
-```
+Once the `zfs recv` command finishes, you can attach this newly created `<ZVOL_NAME>-restored` block device to a new Virtual Machine in TrueNAS and boot it up.
 
 ---
 
