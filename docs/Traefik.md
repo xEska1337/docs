@@ -210,7 +210,7 @@ Finally, create the Docker Compose file to tie everything together. Remember to 
 ```yaml title="docker-compose.yaml"
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3
     container_name: traefik
     restart: unless-stopped
     security_opt:

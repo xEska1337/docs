@@ -10,9 +10,9 @@ The firewall runs on a modified **Dell Optiplex 7050 Micro**. Because micro-form
   * **Storage / Redundancy:** Installed two SSDs configured in a **ZFS Mirror** during the OPNsense installation process to ensure high availability and protect against drive failure.
 
 **Modification Gallery:**
-![opnsense_top](images/opnsense_top.jpg)
-![opnsense_internal](images/opnsense_internal.jpg)
-![opnsense_ports](images/opnsense_ports.jpg)
+![opnsense_top](images/opnsense/opnsense_top.jpg)
+![opnsense_internal](images/opnsense/opnsense_internal.jpg)
+![opnsense_ports](images/opnsense/opnsense_ports.jpg)
 -----
 
 ## 2. Network Interfaces & LAGG
@@ -30,9 +30,9 @@ The LAGG is configured using LACP to connect to the core managed switch.
   * **Protocol:** LACP
   * **Hash Layers:** L2 and L3
 
-![opnsense_lagg](images/opnsense_lagg.png)
-![opnsense_lagg2](images/opnsense_lagg2.png)
-![opnsense_lagg3](images/opnsense_lagg3.png)
+![opnsense_lagg](images/opnsense/opnsense_lagg.png)
+![opnsense_lagg2](images/opnsense/opnsense_lagg2.png)
+![opnsense_lagg3](images/opnsense/opnsense_lagg3.png)
 
 -----
 
@@ -70,7 +70,7 @@ For IP address assignment and management across the various VLANs, OPNsense is c
 To route external traffic to the Netbird server located in the DMZ, specific ports are forwarded. To keep the configuration clean, an **Alias** was created containing all required Netbird ports, which is then applied to a single NAT Port Forward rule.
 
 Example rule:
-![opnsense_port_forward](images/opnsense_port_forward.png)
+![opnsense_port_forward](images/opnsense/opnsense_port_forward.png)
 
 !!! tip "NAT Reflection"
     **NAT Reflection** is enabled globally. This allows internal devices on the LAN to access internally hosted services using their external public IP/Domain name seamlessly without leaving the local network.
@@ -86,7 +86,7 @@ The IoT network is strictly controlled to prevent compromised smart devices from
 3.  **Block Inter-VLAN Routing:** Prevent access to all other local subnets (Trusted, Management, etc.).
 4.  **Internet Access:** The default "Allow All" internet rule is strictly **disabled** (or conditionally enabled only for specific devices that require cloud access).
 
-![oopnsense_iot_rules](images/opnsense_iot_rules.png)
+![oopnsense_iot_rules](images/opnsense/opnsense_iot_rules.png)
 
 -----
 
@@ -121,3 +121,49 @@ Configured to listen across the **Main WiFi** and **IoT** networks. This allows 
 #### Automated Cloud Backups
 
 To protect the complex firewall configuration, the `os-gdrive-backup` plugin is configured. OPNsense automatically encrypts and uploads its configuration XML to a secure Google Drive folder on a scheduled basis.
+
+## 7. Remote Access & VPNs
+
+To ensure reliable and redundant access to my homelab from the outside world, I maintain two separate VPN services. My primary mesh VPN is Netbird, but I also run a traditional OpenVPN server directly on the OPNsense firewall as a robust, router-level fallback.
+
+!!! info "Netbird"
+    **For detailed configuration, refer to the [Netbird](Netbird.md) documentation page.**
+
+-----
+
+### OpenVPN (OPNsense Failover)
+
+While Netbird handles my primary peer-to-peer routing and is hosted in the DMZ, OpenVPN serves as my "break-glass" remote access method. Because it runs directly on the core OPNsense hardware, it guarantees I can still securely access my management interfaces to troubleshoot the network even if the Netbird container, Proxmox host, or DMZ VLAN goes offline.
+
+#### 1. Certificate Authority & Keys
+
+Before setting up the server, the cryptographic trust chain was established in OPNsense under **System > Trust > Certificates**.
+
+  * Generated a new internal Certificate Authority (CA).
+  * Generated a new Server Certificate signed by the CA.
+  * **Key Parameters:** RSA 2048-bit, SHA-256 Hash Algorithm.
+
+#### 2. OpenVPN Server Configuration
+
+The core server was configured under **VPN > OpenVPN > Instances** using the following parameters:
+
+  * **Protocol:** UDP
+  * **Local Port:** 1194
+  * **Device Mode:** TUN
+  * **Cryptography:** Attached the previously generated server certificate and enabled strict certificate verification.
+  * **Network Settings:** Assigned a dedicated VPN tunnel subnet and pushed the local DNS servers (AdGuard Home) to connected clients so local hostnames resolve correctly over the tunnel.
+
+#### 3. Firewall Rules for OpenVPN
+
+To allow the VPN to function, two sets of firewall rules were created:
+
+1.  **WAN Interface:** Created a rule allowing incoming UDP traffic on port 1194 to permit clients to initiate the connection to the firewall from the outside.
+2.  **OpenVPN Interface:** Created rules to allow traffic originating from the VPN tunnel to access the required local VLANs.
+
+#### 4. User Creation & Client Export
+
+To grant access to specific devices:
+
+1.  Navigated to **System > Access > Users** and created dedicated OPNsense user accounts.
+2.  Generated a unique client certificate for each user during the account creation process.
+3.  Utilized the **Client Export** utility to easily download the fully assembled `.ovpn` configuration profiles for deployment on laptops and mobile phones.
