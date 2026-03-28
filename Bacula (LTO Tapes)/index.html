@@ -1,0 +1,1036 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../Backup/">
+      
+      
+        <link rel="next" href="../Blue%20Iris/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>LTO Tape Integration (Bacula on TrueNAS) - Szymon Kaczmarek Homelab Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=JetBrainsMono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"JetBrainsMono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lto-tape-integration-bacula-on-truenas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Szymon Kaczmarek Homelab Documentation" class="md-header__button md-logo" aria-label="Szymon Kaczmarek Homelab Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Szymon Kaczmarek Homelab Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              LTO Tape Integration (Bacula on TrueNAS)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Szymon Kaczmarek Homelab Documentation" class="md-nav__button md-logo" aria-label="Szymon Kaczmarek Homelab Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Szymon Kaczmarek Homelab Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome to Szymon Kaczmarek Homelab Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../AdGuard%20Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AdGuard Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LTO Tape Integration (Bacula on TrueNAS)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LTO Tape Integration (Bacula on TrueNAS)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-virtual-machine-hardware-passthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Virtual Machine &amp; Hardware Passthrough
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-bacularis-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Bacularis Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-mounting-truenas-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Mounting TrueNAS Datasets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#useful-administrative-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Useful Administrative Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restoring-files-from-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restoring Files from Backup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disaster-recovery-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disaster Recovery Strategies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Disaster Recovery Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-1-bacula-catalog-backup-native" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 1: Bacula Catalog Backup (Native)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-2-full-vm-export-import-zvol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 2: Full VM Export &amp; Import (ZVOL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Method 2: Full VM Export &amp; Import (ZVOL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites-truenas-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites (TrueNAS Shell)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting the VM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importing-restoring-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Importing / Restoring the VM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-missing-grub-after-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting (Missing GRUB After Import)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Blue%20Iris/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blue Iris &amp; CodeProject.AI Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Netbird/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Netbird VPN Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OPNsense/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OPNsense Firewall Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Traefik/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traefik Reverse Proxy with Cloudflare SSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-virtual-machine-hardware-passthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Virtual Machine &amp; Hardware Passthrough
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-bacularis-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Bacularis Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-mounting-truenas-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Mounting TrueNAS Datasets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#useful-administrative-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Useful Administrative Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restoring-files-from-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restoring Files from Backup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disaster-recovery-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disaster Recovery Strategies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Disaster Recovery Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-1-bacula-catalog-backup-native" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 1: Bacula Catalog Backup (Native)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-2-full-vm-export-import-zvol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method 2: Full VM Export &amp; Import (ZVOL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Method 2: Full VM Export &amp; Import (ZVOL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites-truenas-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites (TrueNAS Shell)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting the VM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importing-restoring-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Importing / Restoring the VM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-missing-grub-after-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting (Missing GRUB After Import)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="lto-tape-integration-bacula-on-truenas">LTO Tape Integration (Bacula on TrueNAS)</h1>
+<p>To utilize an available PCIe slot on the TrueNAS server, hardware was added to support physical tape backups. An <strong>LSI 9200-8e 6Gbps SAS HBA (IT Mode)</strong> was installed and connected via a SAS cable to a <strong>Dell LTO-7 tape drive</strong>.</p>
+<p>The backup orchestration is handled by a Debian virtual machine hosted on TrueNAS, utilizing <strong>Bacula</strong> with the <strong>Bacularis</strong> web interface. The SAS HBA is passed through directly to the VM to grant it hardware-level access to the tape drive.</p>
+<hr />
+<h2 id="phase-1-virtual-machine-hardware-passthrough">Phase 1: Virtual Machine &amp; Hardware Passthrough</h2>
+<ol>
+<li>Create a new Virtual Machine on TrueNAS.</li>
+<li>Install <strong>Debian 12 (Bookworm)</strong> as the guest operating system.</li>
+<li>Power down the VM completely.</li>
+<li>Edit the VM settings and add the LSI SAS HBA as a <strong>PCI Passthrough</strong> device.</li>
+<li>Power up the VM and verify the device is recognized.</li>
+</ol>
+<hr />
+<h2 id="phase-2-bacularis-installation">Phase 2: Bacularis Installation</h2>
+<p>Log into the Debian VM and execute the following commands as the root user to install Bacula and the Bacularis web GUI.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>sudo<span class="w"> </span>su
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>wget<span class="w"> </span>-qO-<span class="w"> </span>https://packages.bacularis.app/bacularis.pub<span class="w"> </span><span class="p">|</span><span class="w"> </span>gpg<span class="w"> </span>--dearmor<span class="w"> </span>&gt;<span class="w"> </span>/usr/share/keyrings/bacularis-archive-keyring.gpg
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;# Bacularis - Debian 12 Bookworm package repository</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="s2">deb [signed-by=/usr/share/keyrings/bacularis-archive-keyring.gpg] https://packages.bacularis.app/stable/debian bookworm main&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/etc/apt/sources.list.d/bacularis-app.list
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>apt<span class="w"> </span>update
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>apt<span class="w"> </span>install<span class="w"> </span>bacularis<span class="w"> </span>bacularis-nginx
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ln<span class="w"> </span>-s<span class="w"> </span>/etc/nginx/sites-available/bacularis.conf<span class="w"> </span>/etc/nginx/sites-enabled/
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>nginx
+</span></code></pre></div>
+<blockquote>
+<p><strong>Accessing the GUI:</strong> The Bacularis web interface is now available at <code>http://&lt;VM_IP_ADDRESS&gt;:9097</code>. The default credentials are user: <code>admin</code> and password: <code>admin</code>.</p>
+</blockquote>
+<hr />
+<h2 id="phase-3-mounting-truenas-datasets">Phase 3: Mounting TrueNAS Datasets</h2>
+<p>Any TrueNAS dataset that needs to be backed up to tape must first be shared via NFS and mounted inside the Debian VM.</p>
+<p>Open the file systems table for editing:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>nano<span class="w"> </span>/etc/fstab
+</span></code></pre></div>
+<p>Add your datasets using the following syntax:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&lt;TrueNAS_IP&gt;:/mnt/&lt;POOL_NAME&gt;/&lt;DATASET_NAME&gt; /mnt/&lt;DATASET_NAME&gt; nfs defaults 0 0
+</span></code></pre></div>
+<p>Mount the newly added datasets immediately:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sudo<span class="w"> </span>mount<span class="w"> </span>-a
+</span></code></pre></div>
+<hr />
+<h2 id="useful-administrative-commands">Useful Administrative Commands</h2>
+<p><strong>Verify PCI/SCSI Devices:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>lsscsi
+</span></code></pre></div>
+<p><strong>Access the Bacula Console:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/sbin
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./bconsole
+</span></code></pre></div>
+<p><strong>Common Bconsole Commands:</strong></p>
+<ul>
+<li><code>status jobid=1234</code> (Checks the status of a specific job)</li>
+<li><code>list files jobid=1234</code> (Lists the files processed in a specific job)</li>
+<li><code>restore</code> (Start restore)</li>
+<li><code>list jobs</code> (List all jobs)</li>
+</ul>
+<hr />
+<h2 id="restoring-files-from-backup">Restoring Files from Backup</h2>
+<div class="admonition tip">
+<p class="admonition-title">GUI vs. CLI Restores</p>
+<p>Before restoring, you need to create a restore job template. You can do that in the Bacularis web interface. However, if you are restoring from a very large backup job, it is highly recommended to use the <code>bconsole</code> CLI interface for restore process, as it handles building and navigating massive file trees much faster.</p>
+</div>
+<p><strong>1. Enter Bconsole:</strong></p>
+<p>Access your Debian VM and open the Bacula console:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">cd</span><span class="w"> </span>/usr/sbin
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>./bconsole
+</span></code></pre></div></p>
+<p><strong>2. Locate Your Job ID:</strong></p>
+<p>List all previous jobs to find the ID of the backup you want to restore from:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>*list jobs
+</span></code></pre></div></p>
+<p><strong>3. Initiate the Restore:</strong></p>
+<p>Start the restore process:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>*restore
+</span></code></pre></div>
+Choose the appropriate option for your needs. To restore specific files, select <strong>option 3</strong> (<em>Enter list of comma separated JobIds to select</em>), then input your target Job ID.</p>
+<p><strong>4. Select Files:</strong></p>
+<p>Wait for the virtual file tree to build. Once loaded, you can navigate through the backup (using standard <code>cd</code> and <code>ls</code> commands) and select files to restore:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>*mark &quot;your_file_or_directory&quot;
+</span></code></pre></div></p>
+<p><strong>5. Finalize Selection:</strong></p>
+<p>When you have marked all desired files, type:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>*done
+</span></code></pre></div></p>
+<p><strong>6. Review and Run:</strong></p>
+<p>Bacula will display a summary of the restore job. </p>
+<ul>
+<li>To restore to the <strong>original location</strong>, you don't need to change anything. </li>
+<li>To restore to a <strong>different location</strong>, type <code>mod</code>, select the <code>Where</code> option to modify the restore path, and specify the new directory.</li>
+</ul>
+<p>Finally, run the job and wait for it to complete.</p>
+<hr />
+<h2 id="disaster-recovery-strategies">Disaster Recovery Strategies</h2>
+<p>To ensure maximum resilience and prevent a single point of failure, I maintain two separate disaster recovery methods for the backup infrastructure itself. You can rebuild using Bacula's native catalog backup, or perform a full bare-metal restore by exporting the TrueNAS VM disk.</p>
+<h3 id="method-1-bacula-catalog-backup-native">Method 1: Bacula Catalog Backup (Native)</h3>
+<p>Bacula automatically includes a <code>BackupCatalog</code> job in its default configuration. This job creates a database dump (containing all your file records, volumes, job histories, and configuration paths) and writes it directly to your storage media. To ensure you can actually find and restore this catalog during a disaster, you must securely store the generated <code>.bsr</code> (bootstrap) file off-site or on a separate machine. This file marks the exact physical position of the catalog dump on the tape.</p>
+<div class="admonition tip">
+<p class="admonition-title">Why keep both?</p>
+<p>While restoring the catalog requires you to manually rebuild the Debian VM and reinstall Bacula first, having the <code>BackupCatalog</code> on tape is invaluable. If your TrueNAS server completely fails and you need to move your tape drive to a completely different hypervisor or bare-metal Linux machine, the catalog dump allows you to resume operations without needing to import a TrueNAS-specific ZVOL.</p>
+</div>
+<h3 id="method-2-full-vm-export-import-zvol">Method 2: Full VM Export &amp; Import (ZVOL)</h3>
+<p>To protect the entire Bacula configuration, web interface, and OS layer simultaneously, the Debian VM is exported directly from the TrueNAS ZFS volumes (ZVOLs) to external storage. This is the fastest way to recover if the TrueNAS server is still healthy but the VM becomes corrupted.</p>
+<h4 id="prerequisites-truenas-shell">Prerequisites (TrueNAS Shell)</h4>
+<ol>
+<li>Ensure your TrueNAS user has SSH access enabled.</li>
+<li>Allow <code>sudo</code> command execution for your user.</li>
+<li>Enable SSH with password login (if not using keys).</li>
+<li>Create a temporary transfer directory: <code>mkdir /mnt/transfer</code></li>
+<li>Grant ownership to your user: <code>sudo chown &lt;USERNAME&gt;:&lt;USERNAME&gt; /mnt/transfer</code></li>
+</ol>
+<h4 id="exporting-the-vm">Exporting the VM</h4>
+<div class="admonition danger">
+<p class="admonition-title">CRITICAL</p>
+<p>You <strong>must</strong> power down the Debian VM completely before proceeding. Taking a snapshot of a running VM without guest-agent quiescing can lead to severe data corruption.</p>
+</div>
+<p>Run the following command in the TrueNAS shell. This one-liner generates a timestamp, takes a fast ZFS snapshot, and pipes the serialized data through <code>pv</code> (for a progress bar) and <code>gzip</code> for compression:</p>
+<div class="language-bash highlight"><span class="filename">Export ZVOL to external storage</span><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nv">TS</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+<span class="s2">&quot;%Y-%m-%d_%H-%M-%S&quot;</span><span class="k">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span>&lt;POOL_NAME&gt;/&lt;ZVOL_NAME&gt;@<span class="nv">$TS</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>zfs<span class="w"> </span>send<span class="w"> </span>&lt;POOL_NAME&gt;/&lt;ZVOL_NAME&gt;@<span class="nv">$TS</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>pv<span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span>/mnt/transfer/bacula_vm_backup_<span class="nv">$TS</span>.gz
+</span></code></pre></div>
+<p>Once completed, use a secure transfer tool (like WinSCP or <code>rsync</code>) to securely copy the resulting <code>.gz</code> file to an external USB drive or off-site storage location.</p>
+<h4 id="importing-restoring-the-vm">Importing / Restoring the VM</h4>
+<p>To import the VM and create a new ZVOL from your compressed backup, use the following command (be sure to replace <code>&lt;TIMESTAMP&gt;</code> with your actual file's timestamp):</p>
+<p><div class="language-bash highlight"><span class="filename">Restore ZVOL from backup</span><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>pv<span class="w"> </span>/mnt/transfer/bacula_vm_backup_&lt;TIMESTAMP&gt;.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>gunzip<span class="w"> </span>-c<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>zfs<span class="w"> </span>recv<span class="w"> </span>&lt;POOL_NAME&gt;/&lt;ZVOL_NAME&gt;-restored
+</span></code></pre></div>
+Once the <code>zfs recv</code> command finishes, you can attach this newly created <code>&lt;ZVOL_NAME&gt;-restored</code> block device to a new Virtual Machine in TrueNAS and boot it up.</p>
+<hr />
+<h4 id="troubleshooting-missing-grub-after-import">Troubleshooting (Missing GRUB After Import)</h4>
+<p>If the restored VM boots into the UEFI shell because GRUB is missing, follow these steps inside the UEFI shell prompt:</p>
+<ol>
+<li>Map the filesystems to locate the EFI partition:</li>
+</ol>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>map
+</span></code></pre></div>
+<ol>
+<li>Look for the device mapped as <code>FS0:</code> (or <code>FS1:</code>) and change to it:</li>
+</ol>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>FS0:
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>cd EFI\debian
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>dir
+</span></code></pre></div>
+<ol>
+<li>If you see <code>grubx64.efi</code>, boot into Debian manually by typing:</li>
+</ol>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>grubx64.efi
+</span></code></pre></div>
+<p><strong>Fixing the Automatic Boot Entry:</strong>
+Once you confirm Debian can boot, you can permanently fix the boot menu from the UEFI shell:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a># View existing boot entries
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>bcfg boot dump  
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a># Add the Debian bootloader (Replace &lt;YOUR_DEVICE_ID&gt; with FS0, FS1, etc.)
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>bcfg boot add 0 &lt;YOUR_DEVICE_ID&gt;:\EFI\debian\grubx64.efi &quot;Debian Boot&quot;
+</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a># Reboot the VM
+</span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>reset
+</span></code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
