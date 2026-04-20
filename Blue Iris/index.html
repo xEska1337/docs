@@ -1,0 +1,965 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../Bacula%20%28LTO%20Tapes%29/">
+      
+      
+        <link rel="next" href="../Netbird/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Blue Iris & CodeProject.AI Integration - Szymon Kaczmarek Homelab Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=JetBrainsMono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"JetBrainsMono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#blue-iris-codeprojectai-integration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Szymon Kaczmarek Homelab Documentation" class="md-header__button md-logo" aria-label="Szymon Kaczmarek Homelab Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Szymon Kaczmarek Homelab Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Blue Iris &amp; CodeProject.AI Integration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Szymon Kaczmarek Homelab Documentation" class="md-nav__button md-logo" aria-label="Szymon Kaczmarek Homelab Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Szymon Kaczmarek Homelab Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome to Szymon Kaczmarek Homelab Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../AdGuard%20Home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AdGuard Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Bacula%20%28LTO%20Tapes%29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LTO Tape Integration (Bacula on TrueNAS)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blue Iris &amp; CodeProject.AI Integration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blue Iris &amp; CodeProject.AI Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-general-blue-iris-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. General Blue Iris Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. General Blue Iris Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storage-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-camera-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Camera Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codeprojectai-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CodeProject.AI Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-reolink-camera-configuration-on-device" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Reolink Camera Configuration (On-Device)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-camera-settings-in-blue-iris" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Camera Settings in Blue Iris
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-signal-messenger-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Signal Messenger Notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Signal Messenger Notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notification-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notification Scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bonus-create-a-signal-group-via-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bonus: Create a Signal Group via API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Netbird/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Netbird VPN Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../OPNsense/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OPNsense Firewall Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Paperless-ngx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paperless-ngx with AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Traefik/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traefik Reverse Proxy with Cloudflare SSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-general-blue-iris-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. General Blue Iris Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. General Blue Iris Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storage-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-camera-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Camera Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codeprojectai-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CodeProject.AI Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-reolink-camera-configuration-on-device" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Reolink Camera Configuration (On-Device)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-camera-settings-in-blue-iris" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Camera Settings in Blue Iris
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-signal-messenger-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Signal Messenger Notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Signal Messenger Notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notification-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notification Scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bonus-create-a-signal-group-via-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bonus: Create a Signal Group via API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="blue-iris-codeprojectai-integration">Blue Iris &amp; CodeProject.AI Integration</h1>
+<p>This guide covers the deployment and configuration of <strong>Blue Iris 5</strong> alongside the <strong>CodeProject.AI Server</strong> on a Windows PC.</p>
+<div class="admonition info">
+<p class="admonition-title">Hardware Acceleration</p>
+<p>This system utilizes an Intel CPU with <strong>Quick Sync Video</strong>. Enabling hardware-accelerated video decoding drastically reduces the CPU load, allowing the server to handle a much higher quantity of high-resolution cameras simultaneously.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">CodeProject.AI</p>
+<p><strong>AI backend download link:</strong> <a href="https://codeproject.github.io/">CodeProject.AI GitHub</a></p>
+</div>
+<hr />
+<h2 id="1-general-blue-iris-settings">1. General Blue Iris Settings</h2>
+<h3 id="storage-configuration">Storage Configuration</h3>
+<p>Efficient storage management is critical for NVR performance. I recommend splitting your storage into four distinct folders. When the designated space fills up, Blue Iris will automatically delete the oldest clips to make room for new ones.</p>
+<ul>
+<li><strong>db:</strong> Database files.</li>
+<li><strong>new:</strong> Primary recording location (Allocated: <strong>2.5 TB</strong>).</li>
+<li><strong>alerts:</strong> Saved alert images for AI and notifications (Allocated: <strong>200 GB</strong>).</li>
+<li><strong>stored:</strong> Long-term saved recordings (Allocated: <strong>200 GB</strong>).</li>
+</ul>
+<p><img alt="blueiris_general" src="../images/blueiris/blueiris_general.png" /></p>
+<h3 id="global-camera-settings">Global Camera Settings</h3>
+<p>Ensure that <strong>Hardware accelerated decode</strong> (Intel Quick Sync) is enabled globally so Blue Iris can offload the processing to the integrated GPU.</p>
+<p><img alt="blueiris_general2" src="../images/blueiris/blueiris_general2.png" /></p>
+<h3 id="codeprojectai-configuration">CodeProject.AI Configuration</h3>
+<p>I use a specific set of custom models for accurate object detection:
+<code>ipcam-animal</code>, <code>ipcam-combined</code>, <code>ipcam-dark</code>, <code>ipcam-general</code>, <code>ipcam-plate</code>, and <code>actionnetv2</code>.</p>
+<p>To detect these specific entities, the following objects are defined in the AI settings:</p>
+<ul>
+<li><strong>Persons:</strong> <code>person,people</code></li>
+<li><strong>Vehicles:</strong> <code>vehicle,car,DayPlate,NightPlate,bicycle,motorbike,bus,train,truck,boat</code></li>
+<li><strong>Wildlife:</strong> <code>cat,dog,horse,sheep,cow,elephant,bear,zebra,giraffe,bird,deer,rabbit,raccoon,fox,skunk,squirrel</code></li>
+</ul>
+<p><img alt="blueiris_general3" src="../images/blueiris/blueiris_general3.png" /></p>
+<div class="admonition note">
+<p class="admonition-title">License Plate Recognition</p>
+<p>LPR (License Plate Recognition) is not currently configured, as the current camera angles do not provide the necessary trajectory to recognize plates accurately.</p>
+</div>
+<hr />
+<h2 id="2-reolink-camera-configuration-on-device">2. Reolink Camera Configuration (On-Device)</h2>
+<p>Before adding the cameras to Blue Iris, log directly into the Reolink web interface to configure the network and streams. The strategy is to utilize two streams: a low-quality stream recorded constantly, and a high-quality stream triggered by AI movement.</p>
+<p><strong>Stream Settings:</strong></p>
+<p><img alt="blueiris_camera_reolink" src="../images/blueiris/blueiris_camera_reolink.png" /></p>
+<p><strong>Network Settings:</strong></p>
+<ul>
+<li>Bind a <strong>Static IP</strong> to the camera.</li>
+<li>Set a custom <strong>NTP server</strong> (allowed through OPNsense firewall rules) to keep timestamps perfectly synced.</li>
+<li>Enable <strong>RTSP</strong> and <strong>ONVIF</strong> protocols.</li>
+</ul>
+<hr />
+<h2 id="3-camera-settings-in-blue-iris">3. Camera Settings in Blue Iris</h2>
+<p>Once the camera is prepared, add it to Blue Iris:</p>
+<p><strong>1. Connection &amp; Orientation:</strong> Connect to the Reolink IP, establish the streams, and configure the max framerate and camera orientation.</p>
+<p><img alt="blueiris_camera1" src="../images/blueiris/blueiris_camera1.png" />
+<img alt="blueiris_camera2" src="../images/blueiris/blueiris_camera2.png" /></p>
+<p><strong>2. Motion Sensor:</strong> Configure the standard Blue Iris motion sensor parameters.</p>
+<p><img alt="blueiris_camera3" src="../images/blueiris/blueiris_camera3.png" /></p>
+<p><strong>3. Recording Format:</strong> Set the recording mode to <strong>Continuous sub + Alerts</strong>. Ensure the format is set to <strong>BVR</strong> and record "Direct to disk" without any additional compression to save CPU cycles.</p>
+<p><img alt="blueiris_camera4" src="../images/blueiris/blueiris_camera4.png" />
+<img alt="blueiris_camera5" src="../images/blueiris/blueiris_camera5.png" /></p>
+<p><strong>4. AI Alerts &amp; Motion Zones:</strong> I primarily use the <code>ipcam-combined</code> model. Set the AI to confirm objects with over <strong>65% confidence</strong> (tweak this depending on your environment). Map out different motion zones to categorize alerts, and configure the camera to send notifications based on these specific zones.</p>
+<p><img alt="blueiris_camera7" src="../images/blueiris/blueiris_camera7.png" />
+<img alt="blueiris_camera6" src="../images/blueiris/blueiris_camera6.png" /></p>
+<p><strong>5. Alert Actions:</strong> Set up a trigger action to execute a local script that will push a notification to Signal.</p>
+<p><img alt="blueiris_camera8" src="../images/blueiris/blueiris_camera8.png" />
+<img alt="blueiris_camera9" src="../images/blueiris/blueiris_camera9.png" /></p>
+<hr />
+<h2 id="4-signal-messenger-notifications">4. Signal Messenger Notifications</h2>
+<p>Instead of relying on standard email or SMS, alerts are pushed directly to a Signal group containing a snapshot and a link to the recording.</p>
+<p>This is handled by a Docker container running the <strong><a href="https://github.com/bbernhard/signal-cli-rest-api">Signal CLI REST API</a></strong>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Dedicated Signal Account</p>
+<p>Follow the repository documentation to link the container to a Signal account. It is highly recommended to register a new, dedicated Signal phone number specifically for your homelab alerts.</p>
+</div>
+<h3 id="notification-scripts">Notification Scripts</h3>
+<p>Blue Iris triggers a Batch file (<code>RunSignal.cmd</code>), which securely passes the variables to a PowerShell script (<code>Signal.ps1</code>) to handle the actual API payload.</p>
+<p><strong>1. The Trigger Script:</strong>
+Save this as <code>RunSignal.cmd</code> in your Blue Iris scripts folder.</p>
+<div class="language-bat highlight"><span class="filename">RunSignal.cmd</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">@</span><span class="k">echo</span> off
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">setlocal</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">set</span> <span class="s2">&quot;CAMERA_NAME=</span><span class="nv">%1</span><span class="s2">&quot;</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">set</span> <span class="s2">&quot;CLIP_LINK=</span><span class="nv">%2</span><span class="s2">&quot;</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">set</span> <span class="s2">&quot;PHOTO_PATH=</span><span class="nv">%3</span><span class="s2">&quot;</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>powershell -ExecutionPolicy Bypass -File <span class="s2">&quot;Signal.ps1&quot;</span> -CAMERA_NAME <span class="s2">&quot;</span><span class="nv">%CAMERA_NAME%</span><span class="s2">&quot;</span> -CLIP_LINK <span class="s2">&quot;</span><span class="nv">%CLIP_LINK%</span><span class="s2">&quot;</span> -PHOTO_PATH <span class="s2">&quot;</span><span class="nv">%PHOTO_PATH%</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p><strong>2. The Execution Script:</strong>
+Save this as <code>Signal.ps1</code>.</p>
+<p><em>Note: Ensure the <code>$PICFolder</code> variable matches the actual drive letter and path of your Blue Iris "alerts" folder and replace information that is contained in &lt;&gt;.</em></p>
+<div class="language-powershell highlight"><span class="filename">Signal.ps1</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">param</span><span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="nv">$CAMERA_NAME</span><span class="p">,</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="nv">$CLIP_LINK</span><span class="p">,</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="nv">$PHOTO_PATH</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">)</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nv">$PICFolder</span><span class="p">=</span><span class="s2">&quot;X:\alerts&quot;</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nv">$TMPFILE</span> <span class="p">=</span> <span class="no">[Convert]</span><span class="p">::</span><span class="n">ToBase64String</span><span class="p">(</span><span class="no">[IO.File]</span><span class="p">::</span><span class="n">ReadAllBytes</span><span class="p">(</span><span class="s2">&quot;$PICFolder\$PHOTO_PATH&quot;</span><span class="p">))</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="nv">$message</span> <span class="p">=</span> <span class="s2">&quot;Motion detected: $CAMERA_NAME https://&lt;YOUR_BLUE_IRIS_URL&gt;/ui3.htm?rec=$CLIP_LINK&quot;</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nv">$number</span> <span class="p">=</span> <span class="s2">&quot;&lt;YOUR_PHONE_NUMBER&gt;&quot;</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="nv">$recipients</span><span class="p">=</span><span class="s2">&quot;&lt;YOUR_GROUP_ID&gt;&quot;</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="nv">$json</span> <span class="p">=</span> <span class="p">@{</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="s2">&quot;message&quot;</span><span class="p">=</span><span class="s2">&quot;$message&quot;</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="s2">&quot;base64_attachments&quot;</span> <span class="p">=</span> <span class="p">@(</span><span class="nv">$TMPFILE</span><span class="p">)</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="s2">&quot;number&quot;</span><span class="p">=</span><span class="s2">&quot;$number&quot;</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="s2">&quot;recipients&quot;</span><span class="p">=@(</span><span class="s2">&quot;$recipients&quot;</span><span class="p">)</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="p">}</span> <span class="p">|</span> <span class="nb">ConvertTo-Json</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="nb">Invoke-RestMethod</span> <span class="n">-Uri</span> <span class="s2">&quot;http://&lt;YOUR_SINGAL_CLI_IP&gt;/v2/send&quot;</span> <span class="n">-Method</span> <span class="n">Post</span> <span class="n">-ContentType</span> <span class="s1">&#39;application/json&#39;</span> <span class="n">-Body</span> <span class="nv">$json</span>
+</span></code></pre></div>
+<h3 id="bonus-create-a-signal-group-via-api">Bonus: Create a Signal Group via API</h3>
+<p>If you need to programmatically create the Signal group to hold these alerts, you can run this standalone PowerShell snippet:</p>
+<div class="language-powershell highlight"><span class="filename">CreateSignalGroup.ps1</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">$recipients</span><span class="p">=</span><span class="s2">&quot;&lt;PHONE_NUMBER_YOU_WANT_TO_ADD&gt;&quot;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">$json</span> <span class="p">=</span> <span class="p">@{</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="s2">&quot;description&quot;</span><span class="p">=</span><span class="s2">&quot;Home Security Alerts&quot;</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="s2">&quot;group_link&quot;</span> <span class="p">=</span> <span class="s2">&quot;disabled&quot;</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="s2">&quot;name&quot;</span><span class="p">=</span><span class="s2">&quot;NVR Alerts&quot;</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="s2">&quot;members&quot;</span><span class="p">=@(</span><span class="s2">&quot;$recipients&quot;</span><span class="p">)</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">}</span> <span class="p">|</span> <span class="nb">ConvertTo-Json</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="nb">Invoke-RestMethod</span> <span class="n">-Uri</span> <span class="s2">&quot;http://&lt;YOUR_SINGAL_CLI_IP&gt;/v1/groups/&lt;YOUR_PHONE_NUMBER&gt;&quot;</span> <span class="n">-Method</span> <span class="n">POST</span> <span class="n">-Header</span> <span class="p">@{</span><span class="s2">&quot;Accept&quot;</span> <span class="p">=</span> <span class="s2">&quot;application/json&quot;</span><span class="p">}</span> <span class="n">-ContentType</span> <span class="s1">&#39;application/json&#39;</span> <span class="n">-Body</span> <span class="nv">$json</span>
+</span></code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
