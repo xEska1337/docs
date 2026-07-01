@@ -57,6 +57,42 @@ To manage network-wide ad blocking, tracking protection, and custom DNS filterin
 !!! info "AdGuard Home"
     **For detailed configuration, blocklists, and DNS routing rules, refer to the [AdGuard Home](AdGuard Home.md) documentation page.**
 
+#### Automated Service Recovery (Monit Watchdog)
+
+The built-in **Monit** monitoring engine is configured to watch the AdGuard Home process. If AdGuard crashes or stops unexpectedly, Monit will automatically catch the failure and trigger a restart.
+
+##### Step 1: Create a Service Test
+
+Define the specific condition that Monit will evaluate to identify a service failure.
+
+1. Navigate to **Services > Monit > Settings**.
+2. Select the **Service Test Settings** tab.
+3. Click the **+** (Add) button and configure the following parameters:
+* **Name:** `AdGuard_Stopped`
+* **Condition:** `does not exist`
+* **Action:** `Restart`
+
+##### Step 2: Configure the AdGuard Process Monitor
+
+Link the newly created test condition directly to the binary execution paths of AdGuard Home.
+
+1. Change to the **Service Settings** tab.
+2. Click the **+** (Add) button and apply the following service definitions:
+* **Enable service checks:** `[X]` (Checked)
+* **Name:** `AdGuardHome`
+* **Type:** `Process`
+* **PID File:** `/var/run/adguardhome.pid`
+* **Start command:** `/usr/local/etc/rc.d/adguardhome start`
+* **Stop command:** `/usr/local/etc/rc.d/adguardhome stop`
+* **Tests:** Select `AdGuard_Stopped` from the drop-down list.
+
+##### Step 3: Enable and Apply Monit Engine
+Enforce the new automation rules globally inside the firewall.
+
+1. Switch to the **General Settings** tab.
+2. Check the box for **Enable Monit** (if not already enabled).
+3. **Polling Interval:** The default is `120` seconds. You can safely lower this to `60` seconds if you prefer a faster service recovery time.
+
 ### DHCP Server (Dnsmasq)
 
 For IP address assignment and management across the various VLANs, OPNsense is configured to use **Dnsmasq** as the DHCP server. It handles standard dynamic IP leases for client devices, as well as serving static IP mappings for core homelab infrastructure and servers.
