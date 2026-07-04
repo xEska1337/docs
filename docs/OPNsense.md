@@ -203,3 +203,18 @@ To grant access to specific devices:
 1.  Navigated to **System > Access > Users** and created dedicated OPNsense user accounts.
 2.  Generated a unique client certificate for each user during the account creation process.
 3.  Utilized the **Client Export** utility to easily download the fully assembled `.ovpn` configuration profiles for deployment on laptops and mobile phones.
+
+## 8. Connection Health Monitoring
+
+To ensure OPNsense accurately tracks the uptime, latency, and packet loss of the internet connection, active gateway monitoring is configured. This allows the firewall to properly detect WAN failures and maintain accurate health logs.
+
+### Configuration Steps
+
+1. Navigate to **System > Gateways > Configuration** in the OPNsense menu.
+2. Click the edit (pencil) icon next to your primary WAN gateway (typically named `WAN_DHCP`).
+3. **Disable Gateway Monitoring:** Ensure this box is **unchecked**.
+4. **Monitor IP:** Enter a highly reliable public IP address (e.g., Cloudflare's `1.1.1.1`).
+5. Click **Save** and then **Apply Changes**.
+
+!!! tip "Why use a custom Monitor IP?"
+    By default, OPNsense will ping your ISP's immediate upstream gateway. However, if your ISP's routing fails further downstream, the local gateway might still respond to pings, falsely reporting your connection as "Online." Pinging `1.1.1.1` guarantees that true external internet connectivity is being verified.
