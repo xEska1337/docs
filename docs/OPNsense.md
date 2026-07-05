@@ -55,7 +55,7 @@ To ensure security and isolate broadcast traffic, the network is segmented into 
 To manage network-wide ad blocking, tracking protection, and custom DNS filtering, the `os-adguardhome-maxit` plugin is utilized. AdGuard Home serves as the primary, authoritative DNS server for all VLANs.
 
 !!! info "AdGuard Home"
-    **For detailed configuration, blocklists, and DNS routing rules, refer to the [AdGuard Home](AdGuard Home.md) documentation page.**
+    **For detailed configuration, blocklists, and DNS routing rules, refer to the [AdGuard Home](AdGuard-Home.md) documentation page.**
 
 #### Automated Service Recovery (Monit Watchdog)
 
