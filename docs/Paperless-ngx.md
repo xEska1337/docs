@@ -182,6 +182,8 @@ services:
       - "8778:3000"
     env_file:
       - .env
+    environment:
+      - PAPERLESS_URL=http://paperless:8000
     volumes:
       - <YOUR_PATH>/paperless-stack/paperless-ai-data:/app/data
 
@@ -216,6 +218,9 @@ PAPERLESS_DBPASS=<DB_PASSWORD>
 PAPERLESS_TIKA_ENABLED=1
 PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://gotenberg:3000
 PAPERLESS_TIKA_ENDPOINT=http://tika:9998
+PAPERLESS_URL=<URL_FOR_PROXY>
+PAPERLESS_TRUSTED_PROXIES=<PROXY_IP>
+PAPERLESS_CSRF_TRUSTED_ORIGINS=<URL_FOR_PROXY>
 
 # POSTGRES
 #=================
@@ -234,7 +239,6 @@ OLLAMA_MODEL=llama3.2:3b
 RAG_SERVICE_URL=http://localhost:8000
 RAG_SERVICE_ENABLED=true
 SCAN_INTERVAL=*/30 * * * *
-PAPERLESS_URL=http://paperless:8000
 
 # PAPERLESS-GPT
 #=================
