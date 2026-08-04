@@ -158,6 +158,23 @@ Configured to listen across the **Main WiFi** and **IoT** networks. This allows 
 
 To protect the complex firewall configuration, the `os-gdrive-backup` plugin is configured. OPNsense automatically encrypts and uploads its configuration XML to a secure Google Drive folder on a scheduled basis.
 
+#### UDP Broadcast Relay (LocalSend across VLANs)
+
+By default, UDP broadcast traffic—which apps like **LocalSend** rely on to discover peers on the local network—cannot cross VLAN boundaries. To solve this, the UDP Broadcast Relay service is configured to listen for and forward these specific packets between subnets.
+
+!!! info "Plugin Required"
+    Ensure you have installed the `os-udpbroadcastrelay` plugin from **System > Firmware > Plugins** before proceeding.
+
+Navigate to **Services > UDP Broadcast Relay** and click the **+** (Add) button to create a new relay instance for LocalSend:
+
+* **Relay Port:** `53317` *(The default discovery port for LocalSend)*
+* **Relay Interfaces:** Select the VLANs you want to bridge (e.g., `Trusted` and `Main WiFi`)
+* **Broadcast Address:** `224.0.0.167` *(The multicast group address used by LocalSend)*
+* **Source Address:** `1.1.1.1`
+* **Instance ID:** `1`
+* **Description:** `LocalSendBroadcast`
+
+
 ## 7. Remote Access & VPNs
 
 To ensure reliable and redundant access to my homelab from the outside world, I maintain two separate VPN services. My primary mesh VPN is Netbird, but I also run a traditional OpenVPN server directly on the OPNsense firewall as a robust, router-level fallback.
