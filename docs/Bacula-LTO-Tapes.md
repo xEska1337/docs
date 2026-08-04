@@ -4,50 +4,226 @@ To utilize an available PCIe slot on the TrueNAS server, hardware was added to s
 
 The backup orchestration is handled by a Debian virtual machine hosted on TrueNAS, utilizing **Bacula** with the **Bacularis** web interface. The SAS HBA is passed through directly to the VM to grant it hardware-level access to the tape drive.
 
+!!! tip "Preventing Shoe-Shining"
+    I strongly recommend using an SSD for the VM installation and configuring a dedicated data spooling disk. Tape drives require a constant, high-speed stream of data. If the data source is too slow, the tape drive will repeatedly stop, rewind, and restart (a phenomenon known as "shoe-shining"), which will quickly destroy both the tape media and the drive mechanism. Spooling to a fast SSD first solves this completely.
+
 ---
 
 ## Phase 1: Virtual Machine & Hardware Passthrough
 
-1. Create a new Virtual Machine on TrueNAS.
-2. Install **Debian 12 (Bookworm)** as the guest operating system.
-3. Power down the VM completely.
-4. Edit the VM settings and add the LSI SAS HBA as a **PCI Passthrough** device.
-5. Power up the VM and verify the device is recognized.
+### 1. Create the Virtual Machine
+
+Create a new Virtual Machine on TrueNAS with the following parameters:
+
+* **Guest Operating System:** Linux
+* **Name:** `bacula`
+* **Enable Display (VNC):** `false` (Unchecked)
+* **CPU & RAM:** 6 Cores, 3 Threads,Model: Host Passthroug, 4 GiB RAM (Adjust based on your hardware)
+* **Primary Disk:** Create new disk image (VirtIO, Size: 20 GiB)
+* **Adapter:** VirtIO
+* **Attached NIC:** `br0: vSwitch` (You must use a virtual switch to ensure the fastest speeds when accessing datasets, as this bypasses the physical NIC limits).
+
+
+* **Installation Media:** Attach your Debian 13 ISO from your dataset.
+
+**Configure SPICE Display:**
+After creation, edit the VM devices. Add a new device:
+
+* **Type:** Display
+* **Display Type:** SPICE
+* Set a password and click **Save**.
+
+### 2. Install Debian & Spool Disk
+
+1. Power on the VM and install **Debian 13** using the SPICE display. (A minimal console installation with SSH access is preferred over a graphical interface).
+2. Power down the VM completely.
+3. **Add Spool Disk:** Add a new ZVOL on your SSD pool for data spooling.
+* **Name:** `Bacula-spool-disk`
+* **Size:** 500 GiB (Or larger depending on your SSD size)
+* **Sparse:** Checked
+
+
+4. Attach this new disk to the VM.
+5. Edit the VM settings and add the LSI SAS HBA as a **PCI Passthrough** device.
+6. Power up the VM and verify the SAS device is recognized.
+
+### 3. OS Preparation & Networking
+
+Log into your Debian VM. Install `sudo` and add your user to the group:
+
+```bash
+su -
+apt install sudo -y
+/usr/sbin/usermod -aG sudo <USERNAME>
+
+```
+
+**Set a Static IP:**
+
+```bash
+ip a  # Note your interface name (e.g., ens3)
+sudo nano /etc/network/interfaces
+
+```
+
+Modify the interface block:
+
+```text
+allow-hotplug ens3
+iface ens3 inet static
+    address <YOUR_IP>/24
+    gateway <YOUR_GATEWAY_IP>
+
+```
+
+### 4. Format and Mount the Spool Disk
+
+Find the new 500GB disk, format it, and mount it permanently.
+
+```bash
+lsblk
+sudo mkfs.ext4 /dev/vdb
+sudo mkdir -p /mnt/ssd_spool
+sudo mount /dev/vdb /mnt/ssd_spool
+
+```
+
+Make the mount permanent in `fstab`:
+
+```bash
+sudo blkid /dev/vdb  # Copy the UUID
+sudo nano /etc/fstab
+
+```
+
+Add this line (replace `<YOUR_UUID>`):
+
+```text
+UUID=<YOUR_UUID> /mnt/ssd_spool ext4 defaults,discard 0 2
+
+```
 
 ---
 
 ## Phase 2: Bacularis Installation
 
-Log into the Debian VM and execute the following commands as the root user to install Bacula and the Bacularis web GUI.
+To install Bacularis, you must first create a free account on their website to generate a repository authentication file. Log into the Debian VM and execute the following as root:
 
 ```bash
 sudo su
-```
 
-```bash
+# Install prerequisites
+apt install -y gnupg nfs-common lsscsi rclone stenc
+
+# Import Bacularis GPG Key
 wget -qO- https://packages.bacularis.app/bacularis.pub | gpg --dearmor > /usr/share/keyrings/bacularis-archive-keyring.gpg
+
 ```
 
-```bash
-echo "# Bacularis - Debian 12 Bookworm package repository
-deb [signed-by=/usr/share/keyrings/bacularis-archive-keyring.gpg] https://packages.bacularis.app/stable/debian bookworm main" > /etc/apt/sources.list.d/bacularis-app.list
-```
+Replace the `<>` fields with your specific Bacularis repository credentials:
 
 ```bash
+echo "machine https://packages.bacularis.app login <LOGIN> password <PASSWORD>" > /etc/apt/auth.conf.d/bacularis.conf
+
+echo "# Bacularis - Debian 13 Trixie package repository
+deb [signed-by=/usr/share/keyrings/bacularis-archive-keyring.gpg] https://packages.bacularis.app/stable/debian trixie main" > /etc/apt/sources.list.d/bacularis-app.list
+
+# Install Bacula and Web GUI
 apt update
-apt install bacularis bacularis-nginx
+apt install -y bacula-server bacula-console bacularis bacularis-nginx
+
 ```
+
+**Configure Nginx:**
 
 ```bash
-ln -s /etc/nginx/sites-available/bacularis.conf /etc/nginx/sites-enabled/
-systemctl restart nginx
+rm -f /etc/nginx/sites-enabled/default
+ln -sf /etc/nginx/sites-available/bacularis.conf /etc/nginx/sites-enabled/
+
 ```
 
-> **Accessing the GUI:** The Bacularis web interface is now available at `http://<VM_IP_ADDRESS>:9097`. The default credentials are user: `admin` and password: `admin`.
+Edit the Nginx configuration to listen on port 80 instead of 9097:
+
+```bash
+nano /etc/nginx/sites-available/bacularis.conf
+# Change: listen 9097;  ->  listen 80;
+
+```
+
+**Set Permissions:**
+
+```bash
+chown -R bacula:bacula /mnt/ssd_spool
+chmod -R 750 /mnt/ssd_spool
+usermod -aG bacula www-data
+chown -R bacula:bacula /etc/bacula
+chmod -R g+w /etc/bacula
+
+systemctl restart php8.4-fpm
+systemctl restart nginx
+
+```
+
+> **Accessing the GUI:** The Bacularis web interface is now available at `http://<VM_IP_ADDRESS>`. The default credentials are **user:** `admin` and **password:** `admin`.
 
 ---
 
-## Phase 3: Mounting TrueNAS Datasets
+## Phase 3: Bacularis Initial Configuration
+
+### 1. Database Connection
+
+Retrieve the auto-generated PostgreSQL database password:
+
+```bash
+sudo grep dbpassword /etc/bacula/bacula-dir.conf
+
+```
+
+In the Bacularis GUI setup wizard, configure the database:
+
+* **Database type:** PostgreSQL
+* **Database name:** `bacula`
+* **Login:** `bacula`
+* **Password:** `<RETRIEVED_PASSWORD>`
+* **IP address:** `localhost`
+* Click **Test the connection** and proceed.
+
+### 2. Sudo & Console Permissions
+
+To allow the web interface to execute Bacula commands, edit the sudoers file:
+
+```bash
+sudo visudo
+
+```
+
+Add these lines to the very end of the file:
+
+```text
+www-data ALL = (root) NOPASSWD: /usr/sbin/bconsole
+www-data ALL = (root) NOPASSWD: /usr/sbin/bdirjson
+www-data ALL = (root) NOPASSWD: /usr/sbin/bsdjson
+www-data ALL = (root) NOPASSWD: /usr/sbin/bfdjson
+www-data ALL = (root) NOPASSWD: /usr/sbin/bbconsjson
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl start bacula-dir
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl stop bacula-dir
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl restart bacula-dir
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl start bacula-sd
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl stop bacula-sd
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl restart bacula-sd
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl start bacula-fd
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl stop bacula-fd
+www-data ALL = (root) NOPASSWD: /usr/bin/systemctl restart bacula-fd
+bacula ALL=(root) NOPASSWD: /usr/bin/stenc
+```
+
+Complete the setup wizard, testing the config and console connections. Set a new Administrator login and password. Under **Advanced Settings**, ensure the port is changed to `80`.
+
+Once inside the main web interface, go to **API Menu > Settings > Actions**, enable it, and check **Use sudo**.
+
+---
+
+## Phase 4: Mounting TrueNAS Datasets
 
 Any TrueNAS dataset that needs to be backed up to tape must first be shared via NFS and mounted inside the Debian VM.
 
@@ -61,14 +237,238 @@ sudo nano /etc/fstab
 Add your datasets using the following syntax:
 
 ```text
-<TrueNAS_IP>:/mnt/<POOL_NAME>/<DATASET_NAME> /mnt/<DATASET_NAME> nfs defaults 0 0
+<TrueNAS_IP>:/mnt/<POOL_NAME>/<DATASET_NAME> /mnt/<DATASET_NAME> nfs defaults,x-mount.mkdir 0 0
 
 ```
 
-Mount the newly added datasets immediately:
+Reload the daemon and mount the newly added datasets immediately:
 
 ```bash
+sudo systemctl daemon-reload
 sudo mount -a
+
+```
+
+---
+
+## Phase 5: Bacula Backup Configuration
+
+### 1. Configure Storage & Spooling
+
+In the Bacularis GUI, go to the **Storage** tab and click **Add tape storage wizard**.
+
+* **API host:** Main
+* **Configure:** "No, I do not have it configured yet. I want to add it to Bacula and to Bacularis."
+* **Storage name:** `LTO7-Drive`
+* **Device type:** Single tape device storage (tape drive)
+* **Tape drive device file:** `/dev/nst0` *(Verify with `lsscsi`)*
+* **Media type:** `Tape`
+
+To enable the SSD spooling, you must edit the Storage Daemon config file manually:
+
+```bash
+sudo nano /etc/bacula/bacula-sd.conf
+
+```
+
+Locate your `Device { ... }` block (named `LTO7-Drive`) and add the Spool parameters:
+
+```conf
+Device {
+  DeviceType = "Tape"
+  RemovableMedia = yes
+  AutomaticMount = yes
+  MaximumConcurrentJobs = 1
+  Name = "LTO7-Drive"
+  Description = ""
+  ArchiveDevice = "/dev/nst0"
+  MediaType = "Tape"
+  Spool Directory = "/mnt/ssd_spool"
+  Maximum Spool Size = 450G
+  Maximum Job Spool Size = 450G
+  Maximum Block Size = 1048576
+  Maximum File Size = 20G
+  Hardware End of Medium = yes
+  Fast Forward Space File = yes
+}
+
+```
+
+Restart the Storage Daemon:
+
+```bash
+sudo systemctl restart bacula-sd
+
+```
+
+### 2. Create the Pool
+
+In Bacularis, create a new Pool:
+
+* **Name:** `LTO7-Tape-Pool`
+* **PoolType:** Backup
+* **Storage:** Select `LTO7-Drive`
+* **Recycle:** Checked
+* **VolumeRetention:** `182 Days` (Protects backups from overwriting for 6 months)
+* **AutoPrune:** Checked
+* **JobRetention:** `14600 Days` (Protects job info for ~40 years)
+* **FileRetention:** `14600 Days` (Protects file catalog for ~40 years)
+
+### 3. Create the FileSet
+
+Go to **Director > Configure director > FileSet**. Click **Add Fileset**.
+
+* **Name:** `TrueNAS-Data`
+* **Include Block:**
+* **Options Block:** Compression: `Lzo`, Signature: `Sha256`
+* **File/Directory:** `/mnt/<DATASET_NAME>`
+
+
+* Save the FileSet.
+
+### 4. Create the Backup Job
+
+Click **New backup job wizard**:
+
+* **Job Name:** `TrueNAS-Data-Backup`
+* **JobDefs:** `DefaultJob`
+* **Client:** `debian-bacula-fd`
+* **FileSet:** `TrueNAS-Data`
+* **Storage:** `LTO7-Drive`
+* **Spool Data:** Checked
+* **Pool:** `LTO7-Tape-Pool`
+* **Level:** Full
+* **Accurate:** Checked
+
+### 5. Label Your Tapes
+
+1. Insert one of your LTO-7 tapes into the drive.
+2. In the Bacularis left sidebar, go to **Volumes**.
+3. Click **Label volume**.
+4. Select your `LTO7-Tape-Pool` and your `LTO7-Drive`.
+5. Enter a Volume Name (e.g., `VOL-001`).
+
+---
+
+## Phase 6: Cloud Catalog Backup & Encryption
+
+Here is the revised MkDocs section. I incorporated the fixes we discussed (running it as the `bacula` user solves the permission issues) and added two critical directives (`RunsOnClient = No` and `FailJobOnError = No`) to ensure the script executes securely and doesn't fail your backup if your internet drops.
+
+
+### 1. Rclone BackupCatalog to Google Drive
+
+To ensure the Bacula Catalog is safe off-site, configure Rclone.
+
+```bash
+sudo -u bacula rclone config
+
+```
+
+1. Type `n` (New remote).
+2. **Name:** `gdrive`
+3. **Storage:** Locate **Google Drive** and enter its corresponding number.
+4. Leave `client_id`, `client_secret`, `root_folder_id`, and `service_account_file` blank (press Enter).
+5. **Scope:** Type `1` (Full access).
+6. **Edit advanced config?** Type `n`.
+7. **Use auto config?** Type `n`.
+
+Rclone will generate an authorization command (e.g., `rclone authorize "drive" "..."`).
+
+* Copy this command, open a terminal on your **personal PC** (with Rclone installed), and paste it.
+* Your browser will open. Log into Google and click **Allow**.
+* Copy the long token string output in your PC's terminal, return to the Debian VM, paste it, and press Enter.
+* Type `n` (No Shared Drive), `y` (Save), and `q` (Quit).
+
+**Add the script to Bacularis:**
+
+In the Bacularis GUI, edit the `BackupCatalog` job and click **Show all directives**.
+
+Ensure your storage targets are set:
+
+* **Pool:** LTO7-Tape-Pool
+* **Storage:** LTO7-Drive
+
+Scroll down and add a **RunScript** block with the following parameters:
+
+* **RunsWhen:** `After`
+* **RunsOnClient:** `No` 
+* **Command:** `sh -c 'rclone copyto /var/lib/bacula/BackupCatalog.bsr gdrive:Bacula_DR_Backups/BackupCatalog-$(date +%%Y-%%m-%%d).bsr'`
+
+Save the job.
+
+
+### 2. Configure Hardware Tape Encryption (stenc)
+
+Instead of relying on software-based encryption, we will leverage the LTO drive's built-in hardware encryption. This offloads the cryptographic workload directly to the tape drive, ensuring maximum write speeds and lower CPU usage on the VM.
+
+**1. Generate the Encryption Key**
+
+First, create a secure directory and generate a 256-bit encryption key using `stenc`:
+
+```bash
+sudo mkdir -p /etc/bacula/certs
+cd /etc/bacula/certs
+
+# Generate the 256-bit key
+sudo stenc -g 256 -k /etc/bacula/certs/lto-drive.key
+
+# Secure the key permissions
+sudo chown root:root /etc/bacula/certs/lto-drive.key
+sudo chmod 400 /etc/bacula/certs/lto-drive.key
+
+```
+
+!!! danger "Backup Your Key!"
+    Copy this key to a highly secure password manager or offline storage immediately. **If you lose this key, your encrypted tape backups will be permanently unreadable.**
+    `bash sudo cat /etc/bacula/certs/lto-drive.key `
+
+**2. Test the Drive Encryption**
+
+Before automating the process, manually verify that the tape drive accepts the encryption key. *(Note: Replace `/dev/sg0` with your actual generic SCSI tape device path, which you can find using `lsscsi -g`)*.
+
+```bash
+# Turn encryption ON
+sudo stenc -f /dev/sg0 -e on -a 1 -k /etc/bacula/certs/lto-drive.key
+
+# Verify the drive status (Look for Encryption: ON)
+sudo stenc -f /dev/sg0 --detail
+
+```
+
+**3. Automate Encryption in Bacula**
+
+To ensure encryption is automatically enabled when a backup starts and disabled when it finishes, edit your backup job in the Bacularis GUI and add two **RunScript** blocks.
+
+In the Bacularis GUI, edit your backup job, click **Show all directives**, and add the following:
+
+**Runscript #1 (Enable Encryption)**
+
+* **RunsWhen:** `Before`
+* **RunsOnClient:** `No` *(Unchecked)*
+* **Command:** `sudo /usr/bin/stenc -f /dev/sg0 -e on -a 1 -k /etc/bacula/certs/lto-drive.key`
+
+**Runscript #2 (Disable Encryption)**
+
+* **RunsWhen:** `After`
+* **RunsOnClient:** `No` *(Unchecked)*
+* **Command:** `sudo /usr/bin/stenc -f /dev/sg0 -e off`
+
+
+**Troubleshooting: Unrecognized Labeled Tapes**
+
+If you insert a previously labeled tape but Bacula fails to recognize it (or throws an error when trying to read the volume label), it is highly likely that the hardware encryption key is not currently loaded into the tape drive's memory.
+
+You can confirm this by checking the kernel logs for tape-related read errors:
+
+```bash
+sudo dmesg | grep -i st0 | tail -n 15
+
+```
+
+To resolve this, manually push the encryption key to the drive before instructing Bacula to mount or read the tape:
+
+```bash
+sudo stenc -f /dev/sg0 -e on -a 1 -k /etc/bacula/certs/lto-drive.key
 
 ```
 
@@ -80,6 +480,13 @@ sudo mount -a
 
 ```bash
 lsscsi
+
+```
+
+**Disk I/O stats:**
+
+```bash
+iostat -d -h -m 2
 
 ```
 
