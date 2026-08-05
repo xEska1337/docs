@@ -1,10 +1,12 @@
-# Welcome to Szymon Kaczmarek Homelab Documentation
+# Szymon Kaczmarek's Homelab Documentation
 
-Welcome to the documentation for my personal datacenter and staging environment. 
+Welcome to the documentation for my personal datacenter and staging environment.
 
+I have been actively homelabbing since 2022, constantly tinkering with new software, deploying self-hosted services, and running various complex testing scenarios. This homelab serves as my primary sandbox for continuous learning, infrastructure administration, and self-hosting core applications.
 
-This homelab serves as my primary sandbox for continuous learning, infrastructure administration, and self-hosting core services. I built this environment to gain hands-on experience with virtualization, network security, containerization, and storage management outside of a standard corporate environment.
+I built and maintain this environment to gain hands-on experience with virtualization, network security, containerization, and storage management outside of a standard corporate environment.
 
+![RACK](images/RACK.png)
 ---
 
 ## Architecture & Tech Stack Overview
